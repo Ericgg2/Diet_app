@@ -6,7 +6,7 @@ from .serializers import FoodUploadSerializer
 from  diet_app.food_model import predict_food  # 딥러닝 예측 함수
 import os
 from datetime import date
-
+from .nutrition_get import get_nutritional_info
 from rest_framework.permissions import IsAuthenticated
 
 
@@ -45,10 +45,17 @@ class FoodUploadView(APIView):
             food_upload.predicted_food = predicted_food
             food_upload.save()
 
+            # 사용자가 입력한 음식의 무게 가져오기
+            weight = food_upload.weight
+
+            # 음식의 영양성분을 분석
+            nutritional_info = get_nutritional_info(predicted_food, weight)
+
             return Response({
                 'message': f'{daily_upload.count}번째 음식이 성공적으로 업로드되었습니다.',
                 'predicted_food': predicted_food,
-                'weight': food_upload.weight,
+                'weight': weight,
+                'nutritional_info': nutritional_info,  # 영양성분 정보 추가
             }, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -13,3 +13,28 @@ class DailyUploadCount(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)  # 사용자마다 한 개의 카운트만 가짐
     date = models.DateField(default=date.today)  # 마지막으로 업로드한 날짜
     count = models.IntegerField(default=0)  # 당일 업로드 카운트
+
+class DailyNutrition(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    date = models.DateField(default=date.today)
+    calories = models.FloatField(default=0.0)
+    protein = models.FloatField(default=0.0)
+    fat = models.FloatField(default=0.0)
+    carbs = models.FloatField(default=0.0)
+
+    def reset_daily_values(self):
+        """하루 영양성분 리셋"""
+        self.calories = 0.0
+        self.protein = 0.0
+        self.fat = 0.0
+        self.carbs = 0.0
+
+    def update_nutrition(self, calories, protein, fat, carbs):
+        """영양성분 업데이트"""
+        self.calories += calories
+        self.protein += protein
+        self.fat += fat
+        self.carbs += carbs
+
+    def __str__(self):
+        return f"{self.user.username}'s nutrition for {self.date}"

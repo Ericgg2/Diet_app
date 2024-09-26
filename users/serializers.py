@@ -41,9 +41,6 @@ class SignUpSerializer(serializers.ModelSerializer):
         activity_level = validated_data['activity_level']
         goal_type = validated_data['goal_type']
 
-        print(f"Goal type received: {goal_type}")  # goal_type 확인
-
-
         # BMR 계산
         if gender == 'M':
             bmr = 66.5 + (13.75 * weight) + (5.003 * height) - (6.75 * age)
@@ -79,7 +76,8 @@ class SignUpSerializer(serializers.ModelSerializer):
             weight=weight,
             age=age,
             gender=gender,
-            activity_level=activity_level
+            activity_level=activity_level,
+            bmr = bmr
         )
 
         UserGoal.objects.create(

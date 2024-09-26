@@ -15,9 +15,9 @@ def is_korean(text):
 
 # 한국어 음식 영양성분을 엑셀에서 가져오기
 def get_korean_food_info(food_name, weight):
-    print(food_name)
+
     food_info = food_data[food_data['식품명'] == food_name]
-    print('aa', food_info)
+
     if not food_info.empty:
         # 100g 당 영양성분 가져오기
         calories_per_100g = food_info['칼로리'].values[0]
@@ -94,3 +94,5 @@ def get_nutritional_info(food_name, weight):
     else:
         # 영어 음식인 경우 USDA API에서 영양성분 가져오기
         return get_english_food_info(food_name, weight)
+    
+    

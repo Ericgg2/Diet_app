@@ -7,6 +7,10 @@ class FoodUpload(models.Model):
     image = models.ImageField(upload_to='food_images/')  # 이미지 업로드 필드
     weight = models.FloatField()  # 사용자가 입력한 음식의 무게 (그램)
     predicted_food = models.CharField(max_length=100, blank=True, null=True)  # 딥러닝 모델이 예측한 음식
+    calories = models.FloatField(null=True, blank=True)  # 영양성분: 칼로리
+    protein = models.FloatField(null=True, blank=True)  # 영양성분: 단백질
+    fat = models.FloatField(null=True, blank=True)  # 영양성분: 지방
+    carbs = models.FloatField(null=True, blank=True)  # 영양성분: 탄수화물
     uploaded_at = models.DateTimeField(auto_now_add=True)  # 업로드 날짜 기록
 
 class DailyUploadCount(models.Model):

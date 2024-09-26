@@ -31,7 +31,8 @@ urlpatterns = [
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),  # JWT 토큰 발급
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'), # 리프레시 토큰으로 액세스 토큰 갱신
     path('health/', include('health.urls')),  # health 앱의 URL 추가
-
+    path('posts/', include('posts.urls')),  # posts 앱의 URL 추가
+    
 ]
 
 if settings.DEBUG:  # DEBUG 모드에서만 media 파일 서빙을 허용

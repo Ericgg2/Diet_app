@@ -1,8 +1,13 @@
 # settings/common.py
 from pathlib import Path
 import os
+import boto3
+
+from dotenv import load_dotenv
+load_dotenv()  # .env 파일 로드
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -78,7 +83,7 @@ from datetime import timedelta
 
 # JWT 설정
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),  # 액세스 토큰의 유효 기간
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=180),  # 액세스 토큰의 유효 기간
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),     # 리프레시 토큰의 유효 기간
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': True,
@@ -93,3 +98,20 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
 }
+
+# # Cloudflare R2 Access 설정
+# AWS_ACCESS_KEY_ID = os.getenv('R2_ACCESS_KEY_ID')  # 환경변수로 설정
+# AWS_SECRET_ACCESS_KEY = os.getenv('R2_SECRET_ACCESS_KEY')  # 환경변수로 설정
+# AWS_STORAGE_BUCKET_NAME = os.getenv('R2_BUCKET_NAME')  # 버킷 이름
+# AWS_SESSION_TOKEN = os.getenv('AWS_SESSION_TOKEN')
+
+# # Cloudflare R2의 커스텀 엔드포인트 설정
+# AWS_S3_ENDPOINT_URL = 'https://5fb2ad66dc77b486be78e8a6c1543b1d.r2.cloudflarestorage.com'  # Cloudflare R2의 계정 ID를 사용
+# AWS_S3_REGION_NAME = 'auto'  # Cloudflare R2의 기본 리전 설정
+
+# # 파일을 R2 버킷에 저장하도록 설정
+# DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+# MEDIA_URL = 'https://5fb2ad66dc77b486be78e8a6c1543b1d.r2.cloudflarestorage.com/diet-control-app/'
+
+# # Cloudflare R2 미디어 URL 설정

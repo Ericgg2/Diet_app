@@ -98,7 +98,7 @@ class PostCreateAPIView(APIView):
         post.save()
 
 
-        return Response({"message": "게시글이 성공적으로 업로드되었습니다."}, status=status.HTTP_201_CREATED)
+        return Response({"message": "게시글이 성공적으로 업로드되었습니다.", "id": post.id}, status=status.HTTP_201_CREATED)
 
 from rest_framework.views import APIView
 from rest_framework.response import Response

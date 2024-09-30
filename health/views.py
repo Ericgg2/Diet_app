@@ -97,10 +97,12 @@ class FoodUploadView(APIView):
                 abs(carbs_diff) <= 10
             )
 
-            # 마지막 끼니인지 여부 확인
+            # 마지막 끼니인지 여부 저장
             last_meal = request.data.get('last_meal', False)
+            food_upload.last_meal = last_meal
+            food_upload.save()
 
-            if last_meal:
+            if last_meal == True:
                 if within_range:
                     message = f"오늘의 목표 달성! 성공했습니다! 총 섭취량: {daily_nutrition.calories}kcal."
                 else:
@@ -125,6 +127,7 @@ class FoodUploadView(APIView):
                 'protein_diff': protein_diff,
                 'fat_diff': fat_diff,
                 'carbs_diff': carbs_diff,
+                'last_meal': last_meal
             }, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -182,10 +185,13 @@ class DailyFoodView(APIView):
         # 음식별 영양성분 저장 리스트
         food_nutrition_details = []
         total_nutrition = {'calories': 0, 'protein': 0, 'fat': 0, 'carbs': 0}
+        food_upload_ids = food_uploads.values_list('id', flat=True)
 
         # 각 음식의 영양성분 추출 (이미 저장된 값 사용)
         for food in food_uploads:
+            print(food.id)
             food_nutrition_details.append({
+                'id': food.id,
                 'predicted_food': food.predicted_food,
                 'weight': food.weight,
                 'image_url': food.image.url,
@@ -193,7 +199,9 @@ class DailyFoodView(APIView):
                 'protein': food.protein,    # 이미 저장된 값 사용
                 'fat': food.fat,            # 이미 저장된 값 사용
                 'carbs': food.carbs,        # 이미 저장된 값 사용
-                'uploaded_at': food.uploaded_at
+                'uploaded_at': food.uploaded_at,
+                'last_meal': food.last_meal  # last_meal 추가
+
             })
 
             # 총 영양성분 누적
@@ -246,6 +254,7 @@ class DailyFoodView(APIView):
             'user': user.username,
             'uploads': food_nutrition_details,  # 각 음식의 영양성분 포함
             'daily_nutrition': nutrition_data,
+            'food_upload_ids': list(food_upload_ids),  # ID 목록 포함
             'total_nutrition': total_nutrition,
             'goal_nutrition': {
                 'daily_calories': user_goal.daily_calories,

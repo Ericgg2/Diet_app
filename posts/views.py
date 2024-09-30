@@ -7,6 +7,8 @@ from .serializers import PostSerializer, CommentSerializer, PostDetailSerializer
 from django.shortcuts import get_object_or_404
 from django.db.models import DateField
 from django.db.models.functions import TruncDate
+from health.models import FoodUpload
+from django.db.models import Sum
 
 
 class PostListAPIView(APIView):
@@ -35,11 +37,48 @@ class PostCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        serializer = PostSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(user=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # 사용자가 선택한 FoodUpload ID 목록과 캡션을 받음
+        food_upload_ids = request.data.get('food_uploads', [])
+        caption = request.data.get('caption', '')
+
+        # FoodUpload 객체들 가져오기
+        food_uploads = FoodUpload.objects.filter(id__in=food_upload_ids, user=request.user)
+
+        if not food_uploads:
+            return Response({"error": "음식 업로드 기록이 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 총 영양성분 계산
+        total_calories = food_uploads.aggregate(Sum('calories'))['calories__sum'] or 0
+        total_protein = food_uploads.aggregate(Sum('protein'))['protein__sum'] or 0
+        total_fat = food_uploads.aggregate(Sum('fat'))['fat__sum'] or 0
+        total_carbs = food_uploads.aggregate(Sum('carbs'))['carbs__sum'] or 0
+
+        # 사용자 목표 가져오기
+        user_goal = request.user.usergoal
+
+        # 목표와의 차이 계산 및 결과 결정
+        result = "성공" if total_calories <= user_goal.daily_calories else "실패"
+
+        # 게시글 생성
+        post = Post.objects.create(
+            user=request.user,
+            total_calories=total_calories,
+            total_protein=total_protein,
+            total_fat=total_fat,
+            total_carbs=total_carbs,
+            goal_calories=user_goal.daily_calories,
+            goal_protein=user_goal.protein_goal,
+            goal_fat=user_goal.fat_goal,
+            goal_carbs=user_goal.carbs_goal,
+            result=result,
+            caption=caption
+        )
+
+        # 선택한 음식 업로드들 연결
+        post.food_uploads.set(food_uploads)
+        post.save()
+
+        return Response({"message": "게시글이 성공적으로 업로드되었습니다."}, status=status.HTTP_201_CREATED)
 
 class PostDetailAPIView(APIView):
     permission_classes = [IsAuthenticated]

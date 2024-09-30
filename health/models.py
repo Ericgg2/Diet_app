@@ -12,6 +12,8 @@ class FoodUpload(models.Model):
     fat = models.FloatField(null=True, blank=True)  # 영양성분: 지방
     carbs = models.FloatField(null=True, blank=True)  # 영양성분: 탄수화물
     uploaded_at = models.DateTimeField(auto_now_add=True)  # 업로드 날짜 기록
+    last_meal = models.BooleanField(default=False)  # 마지막 끼니 여부 추가
+
 
 class DailyUploadCount(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)  # 사용자마다 한 개의 카운트만 가짐

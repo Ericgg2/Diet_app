@@ -1,12 +1,15 @@
 from rest_framework import serializers
 from .models import Post, Comment, Like
 from users.models import UserGoal
+from health.models import FoodUpload
 
 
 class PostSerializer(serializers.ModelSerializer):
+    food_uploads = serializers.PrimaryKeyRelatedField(many=True, queryset=FoodUpload.objects.all())
+
     class Meta:
         model = Post
-        fields = ['image', 'grams']
+        fields = ['food_uploads', 'caption']  # 사용자가 입력한 음식 목록과 캡션
 
 
 class CommentSerializer(serializers.ModelSerializer):

@@ -4,7 +4,7 @@ import requests
 import re
 
 # 엑셀 데이터 로드
-food_data = pd.read_csv('health/filtered_food_data.csv')
+food_data = pd.read_csv('filtered_food_data.csv')
 
 usda_api_key = "5kOrX3iQ6KoatbYkBegcLBWhsg8v7OUbm0inhuzN"
 usda_base_url = "https://api.nal.usda.gov/fdc/v1/foods/search"

@@ -41,3 +41,5 @@ media/
 # macOS 시스템 파일
 .DS_Store
 
+
+db/data

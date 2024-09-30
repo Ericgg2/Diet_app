@@ -32,6 +32,7 @@ class FoodUploadView(APIView):
         daily_upload.save()
 
         serializer = FoodUploadSerializer(data=request.data, context={'request': request})
+
         if serializer.is_valid():
             # 이미지 파일 저장 (사용자 정보 포함)
             food_upload = serializer.save(user=user)
@@ -58,8 +59,11 @@ class FoodUploadView(APIView):
                 food_upload.save()
             else:
                 # 영양성분을 가져올 수 없는 경우
-                return Response({"error": "영양성분 정보를 가져올 수 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
-
+                food_upload.calories = 0
+                food_upload.protein = 0
+                food_upload.fat = 0
+                food_upload.carbs = 0
+                food_upload.save()
 
             # 오늘 날짜의 DailyNutrition 가져오기 또는 생성하기
             daily_nutrition, created = DailyNutrition.objects.get_or_create(
@@ -193,10 +197,14 @@ class DailyFoodView(APIView):
             })
 
             # 총 영양성분 누적
-            total_nutrition['calories'] += food.calories
-            total_nutrition['protein'] += food.protein
-            total_nutrition['fat'] += food.fat
-            total_nutrition['carbs'] += food.carbs
+            if food.calories:
+                total_nutrition['calories'] += food.calories
+            if food.protein:
+                total_nutrition['protein'] += food.protein
+            if food.fat:
+                total_nutrition['fat'] += food.fat
+            if food.carbs:
+                total_nutrition['carbs'] += food.carbs
 
         # 목표 영양성분과의 차이 계산
         calorie_diff = round(total_nutrition['calories'] - user_goal.daily_calories, 1)

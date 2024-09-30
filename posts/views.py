@@ -12,7 +12,7 @@ from django.db.models import Sum
 from users.models import UserGoal
 from health.models import DailyNutrition
 from datetime import date  # date 모듈을 가져옵니다.
-
+from django.http import JsonResponse
 
 class PostListAPIView(APIView):
     permission_classes = [IsAuthenticated]

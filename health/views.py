@@ -189,7 +189,6 @@ class DailyFoodView(APIView):
 
         # 각 음식의 영양성분 추출 (이미 저장된 값 사용)
         for food in food_uploads:
-            print(food.id)
             food_nutrition_details.append({
                 'id': food.id,
                 'predicted_food': food.predicted_food,

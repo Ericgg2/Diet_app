@@ -9,6 +9,9 @@ from django.db.models import DateField
 from django.db.models.functions import TruncDate
 from health.models import FoodUpload
 from django.db.models import Sum
+from users.models import UserGoal
+from health.models import DailyNutrition
+from datetime import date  # date 모듈을 가져옵니다.
 
 
 class PostListAPIView(APIView):
@@ -33,6 +36,7 @@ class MyPostListAPIView(APIView):
         return Response(serializer.data)
 
 
+
 class PostCreateAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -44,32 +48,45 @@ class PostCreateAPIView(APIView):
         # FoodUpload 객체들 가져오기
         food_uploads = FoodUpload.objects.filter(id__in=food_upload_ids, user=request.user)
 
-        if not food_uploads:
-            return Response({"error": "음식 업로드 기록이 없습니다."}, status=status.HTTP_400_BAD_REQUEST)
+        if not food_uploads.exists():
+            return JsonResponse({"error": "음식 업로드 기록이 없습니다."}, status=400)
 
-        # 총 영양성분 계산
-        total_calories = food_uploads.aggregate(Sum('calories'))['calories__sum'] or 0
-        total_protein = food_uploads.aggregate(Sum('protein'))['protein__sum'] or 0
-        total_fat = food_uploads.aggregate(Sum('fat'))['fat__sum'] or 0
-        total_carbs = food_uploads.aggregate(Sum('carbs'))['carbs__sum'] or 0
+        # DailyNutrition에서 해당 날짜의 기록 가져오기
+        daily_nutrition = DailyNutrition.objects.filter(user=request.user, date=date.today()).first()
 
-        # 사용자 목표 가져오기
+        if not daily_nutrition:
+            return JsonResponse({"error": "영양성분 기록이 없습니다."}, status=400)
+
+        # 사용자 목표 영양성분 가져오기
         user_goal = request.user.usergoal
 
-        # 목표와의 차이 계산 및 결과 결정
-        result = "성공" if total_calories <= user_goal.daily_calories else "실패"
+        # 목표와 섭취량 차이 계산
+        calorie_diff = round(daily_nutrition.calories - user_goal.daily_calories, 1)
+        protein_diff = round(daily_nutrition.protein - user_goal.protein_goal, 1)
+        fat_diff = round(daily_nutrition.fat - user_goal.fat_goal, 1)
+        carbs_diff = round(daily_nutrition.carbs - user_goal.carbs_goal, 1)
+
+        # 목표와 섭취량 차이에 따른 성공/실패 여부 결정
+        within_range = (
+            abs(calorie_diff) <= 100 and
+            abs(protein_diff) <= 10 and
+            abs(fat_diff) <= 10 and
+            abs(carbs_diff) <= 10
+        )
+
+        result = "성공했습니다!" if within_range else "실패했습니다!"
 
         # 게시글 생성
         post = Post.objects.create(
             user=request.user,
-            total_calories=total_calories,
-            total_protein=total_protein,
-            total_fat=total_fat,
-            total_carbs=total_carbs,
-            goal_calories=user_goal.daily_calories,
-            goal_protein=user_goal.protein_goal,
-            goal_fat=user_goal.fat_goal,
-            goal_carbs=user_goal.carbs_goal,
+            total_calories=daily_nutrition.calories,
+            total_protein=daily_nutrition.protein,
+            total_fat=daily_nutrition.fat,
+            total_carbs=daily_nutrition.carbs,
+            goal_calories=request.user.usergoal.daily_calories,
+            goal_protein=request.user.usergoal.protein_goal,
+            goal_fat=request.user.usergoal.fat_goal,
+            goal_carbs=request.user.usergoal.carbs_goal,
             result=result,
             caption=caption
         )
@@ -78,7 +95,25 @@ class PostCreateAPIView(APIView):
         post.food_uploads.set(food_uploads)
         post.save()
 
-        return Response({"message": "게시글이 성공적으로 업로드되었습니다."}, status=status.HTTP_201_CREATED)
+        # 각 FoodUpload의 이미지 URL 가져오기
+        image_urls = [food.image.url for food in food_uploads]
+
+        return Response({
+            "message": "게시글이 성공적으로 업로드되었습니다.",
+            "username": request.user.username,
+            "caption": caption,
+            "total_calories": daily_nutrition.calories,
+            "total_protein": daily_nutrition.protein,
+            "total_fat": daily_nutrition.fat,
+            "total_carbs": daily_nutrition.carbs,
+            "goal_calories": request.user.usergoal.daily_calories,
+            "goal_protein": request.user.usergoal.protein_goal,
+            "goal_fat": request.user.usergoal.fat_goal,
+            "goal_carbs": request.user.usergoal.carbs_goal,
+            "result": result,  # 성공/실패 여부
+            "image_urls": image_urls,  # 모든 이미지 URL 리스트 반환
+            "created_at": post.created_at  # 게시글 생성 시간 반환
+        }, status=201)
 
 class PostDetailAPIView(APIView):
     permission_classes = [IsAuthenticated]

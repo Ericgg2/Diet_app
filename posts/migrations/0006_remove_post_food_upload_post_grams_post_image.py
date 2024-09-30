@@ -14,15 +14,4 @@ class Migration(migrations.Migration):
             model_name="post",
             name="food_upload",
         ),
-        migrations.AddField(
-            model_name="post",
-            name="grams",
-            field=models.FloatField(default=100),
-        ),
-        migrations.AddField(
-            model_name="post",
-            name="image",
-            field=models.ImageField(default="", upload_to="food_photos/"),
-            preserve_default=False,
-        ),
     ]

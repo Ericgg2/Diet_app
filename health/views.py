@@ -102,7 +102,7 @@ class FoodUploadView(APIView):
             food_upload.last_meal = last_meal
             food_upload.save()
 
-            if last_meal == True:
+            if last_meal:
                 if within_range:
                     message = f"오늘의 목표 달성! 성공했습니다! 총 섭취량: {daily_nutrition.calories}kcal."
                 else:

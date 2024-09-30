@@ -95,67 +95,64 @@ class PostCreateAPIView(APIView):
         post.food_uploads.set(food_uploads)
         post.save()
 
-        # 각 FoodUpload의 이미지 URL 가져오기
-        image_urls = [food.image.url for food in food_uploads]
 
-        return Response({
-            "message": "게시글이 성공적으로 업로드되었습니다.",
-            "username": request.user.username,
-            "caption": caption,
-            "total_calories": daily_nutrition.calories,
-            "total_protein": daily_nutrition.protein,
-            "total_fat": daily_nutrition.fat,
-            "total_carbs": daily_nutrition.carbs,
-            "goal_calories": request.user.usergoal.daily_calories,
-            "goal_protein": request.user.usergoal.protein_goal,
-            "goal_fat": request.user.usergoal.fat_goal,
-            "goal_carbs": request.user.usergoal.carbs_goal,
-            "result": result,  # 성공/실패 여부
-            "image_urls": image_urls,  # 모든 이미지 URL 리스트 반환
-            "created_at": post.created_at  # 게시글 생성 시간 반환
-        }, status=201)
+        return Response({"message": "게시글이 성공적으로 업로드되었습니다."}, status=status.HTTP_201_CREATED)
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.shortcuts import get_object_or_404
+from .models import Post, Comment, Like
+from .serializers import PostDetailSerializer, CommentSerializer
+from rest_framework.permissions import IsAuthenticated
+
 
 class PostDetailAPIView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]  # 인증된 사용자만 접근 가능
 
-    def get(self, request, pk, *args, **kwargs):
-        post = get_object_or_404(Post, pk=pk)  # pk로 특정 게시글을 가져옴
-        serializer = PostDetailSerializer(post, context={'request': request})  # 요청 컨텍스트 전달
-        return Response(serializer.data)
+    def get(self, request, post_id, *args, **kwargs):
+        # 게시글을 ID로 가져오기
+        post = get_object_or_404(Post, id=post_id)
 
-    def post(self, request, pk, *args, **kwargs):
-        post = get_object_or_404(Post, pk=pk)  # 댓글을 달기 위해 게시글을 가져옴
+        # 게시글 데이터 직렬화
+        serializer = PostDetailSerializer(post)
+        
+        # 직렬화된 데이터를 응답으로 반환
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request, post_id, *args, **kwargs):
+        # 댓글을 달기 위해 게시글을 가져옴
+        post = get_object_or_404(Post, id=post_id)
         serializer = CommentSerializer(data=request.data)
+
+        # 유효성 검사 후 댓글 생성
         if serializer.is_valid():
             serializer.save(user=request.user, post=post)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        # 유효하지 않은 경우 에러 반환
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def put(self, request, pk, *args, **kwargs):
-        post = get_object_or_404(Post, pk=pk)  # 게시글 가져오기
+    def put(self, request, post_id, *args, **kwargs):
+        # 게시글 가져오기 (좋아요 추가)
+        post = get_object_or_404(Post, id=post_id)
         like, created = Like.objects.get_or_create(user=request.user, post=post)  # 좋아요 추가
 
+        # 좋아요를 처음 누른 경우
         if created:
             return Response({"message": "좋아요를 눌렀습니다."}, status=status.HTTP_201_CREATED)
         else:
             return Response({"message": "이미 좋아요를 눌렀습니다."}, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, pk, *args, **kwargs):
-        post = get_object_or_404(Post, pk=pk)  # 게시글 가져오기
+    def delete(self, request, post_id, *args, **kwargs):
+        # 게시글 가져오기 (좋아요 삭제)
+        post = get_object_or_404(Post, id=post_id)
         try:
-            like = Like.objects.get(user=request.user, post=post)  # 좋아요 가져오기
+            like = Like.objects.get(user=request.user, post=post)  # 해당 유저의 좋아요 가져오기
             like.delete()  # 좋아요 삭제
             return Response({"message": "좋아요가 해제되었습니다."}, status=status.HTTP_204_NO_CONTENT)
         except Like.DoesNotExist:
             return Response({"message": "먼저 좋아요를 눌러주세요."}, status=status.HTTP_400_BAD_REQUEST)
-
-    def calculate_calories(self, grams):
-        return grams  # Example: 2 calories per gram
-
-    def get_feedback(self, remaining_calories):
-        if remaining_calories < 0:
-            return "칼로리를 초과했습니다. 조절하세요."
-        return "영양소 섭취가 적절합니다."
 
 
 

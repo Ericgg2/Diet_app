@@ -9,10 +9,10 @@ ALLOWED_HOSTS = ['*']
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'diet_board',
+        'NAME': 'diet-board',
         'USER': 'root',
-        'PASSWORD': '4yLiv4gRcujG+KHU',
-        'HOST': '127.0.0.1',
+        'PASSWORD': '0000',
+        'HOST': 'localhost',
         'PORT': '3306',
     }
 }

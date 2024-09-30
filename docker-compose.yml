@@ -1,0 +1,29 @@
+version: '1'
+services:
+  # diet-db:
+  #   container_name: diet-db
+  #   build:
+  #     context: ./db
+  #     dockerfile: ../DB-DockerFile
+  #   environment:
+  #     MARIADB_ROOT_PASSWORD: 4yLiv4gRcujG+KHU
+  #     MARIADB_DATABASE: diet_board
+  #   command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+  #   volumes:
+  #     - ./db/data:/var/lib/mysql
+  #   ports:
+  #     - 3306:3306
+
+  diet-django:
+    container_name: diet-django
+    build:
+      context: .
+      dockerfile: ./SERVER-DockerFile
+    restart: 'on-failure'
+    volumes:
+      - ./:/diet-app
+    ports:
+      - 8000:8000
+
+  
+    

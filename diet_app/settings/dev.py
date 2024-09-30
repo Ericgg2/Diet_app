@@ -3,15 +3,15 @@ from .common import *
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['*']
 
 # 개발 환경에서 사용될 데이터베이스 (MySQL 예시)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'diet-board',
+        'NAME': 'diet_board',
         'USER': 'root',
-        'PASSWORD': '0000',
+        'PASSWORD': '4yLiv4gRcujG+KHU',
         'HOST': '127.0.0.1',
         'PORT': '3306',
     }

@@ -43,19 +43,20 @@ class PostCreateAPIView(APIView):
     def post(self, request, *args, **kwargs):
         # 사용자가 선택한 FoodUpload ID 목록과 캡션을 받음
         food_upload_ids = request.data.get('food_uploads', [])
+        title = request.data.get('title', '')
         caption = request.data.get('caption', '')
 
         # FoodUpload 객체들 가져오기
         food_uploads = FoodUpload.objects.filter(id__in=food_upload_ids, user=request.user)
 
         if not food_uploads.exists():
-            return JsonResponse({"error": "음식 업로드 기록이 없습니다."}, status=400)
+            return Response({"error": "음식 업로드 기록이 없습니다."}, status=400)
 
         # DailyNutrition에서 해당 날짜의 기록 가져오기
         daily_nutrition = DailyNutrition.objects.filter(user=request.user, date=date.today()).first()
 
         if not daily_nutrition:
-            return JsonResponse({"error": "영양성분 기록이 없습니다."}, status=400)
+            return Response({"error": "영양성분 기록이 없습니다."}, status=400)
 
         # 사용자 목표 영양성분 가져오기
         user_goal = request.user.usergoal
@@ -79,6 +80,7 @@ class PostCreateAPIView(APIView):
         # 게시글 생성
         post = Post.objects.create(
             user=request.user,
+            title=title,  # 제목 추가
             total_calories=daily_nutrition.calories,
             total_protein=daily_nutrition.protein,
             total_fat=daily_nutrition.fat,
@@ -121,16 +123,11 @@ class PostDetailAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request, post_id, *args, **kwargs):
-        # 댓글을 달기 위해 게시글을 가져옴
-        post = get_object_or_404(Post, id=post_id)
-        serializer = CommentSerializer(data=request.data)
-
-        # 유효성 검사 후 댓글 생성
+        post = get_object_or_404(Post, pk=post_id)  # 댓글을 달기 위해 게시글을 가져옴
+        serializer = CommentSerializer(data=request.data, context={'request': request})  # request context 전달
         if serializer.is_valid():
-            serializer.save(user=request.user, post=post)
+            serializer.save(post=post)  # 게시글과 함께 댓글 저장
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        
-        # 유효하지 않은 경우 에러 반환
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def put(self, request, post_id, *args, **kwargs):

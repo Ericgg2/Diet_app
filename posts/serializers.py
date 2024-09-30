@@ -11,14 +11,26 @@ class PostSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Post
-        fields = ['food_uploads', 'caption']  # 사용자가 입력한 음식 목록과 캡션
+        fields = ['food_uploads','title', 'caption']  # 사용자가 입력한 음식 목록과 캡션
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    replies = serializers.SerializerMethodField()
+
     class Meta:
         model = Comment
-        fields = ['id', 'post', 'user', 'text', 'created_at']
-        read_only_fields = ['user', 'post', 'created_at']
+        fields = ['id', 'text', 'created_at', 'replies', 'parent_comment']
+
+    def get_replies(self, obj):
+        # 해당 댓글의 대댓글을 가져옴
+        if obj.replies.exists():
+            return CommentSerializer(obj.replies.all(), many=True).data
+        return None
+
+    def create(self, validated_data):
+        # 댓글 작성자의 user를 request.user로 자동 설정
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)
 
 class LikeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -29,11 +41,12 @@ class PostDetailSerializer(serializers.ModelSerializer):
     comments = CommentSerializer(many=True, read_only=True)  # 댓글 포함
     likes_count = serializers.SerializerMethodField()  # 좋아요 수 추가
     food_uploads = FoodUploadSerializer(many=True)  # 여러 음식 업로드 포함
+    user = serializers.CharField(source='user.username')  # user의 username을 반환
 
     class Meta:
         model = Post
         fields = [
-            'user', 'food_uploads', 'total_calories', 'total_protein', 'total_fat', 
+            'id','user', 'food_uploads', 'title' ,'total_calories', 'total_protein', 'total_fat', 
             'total_carbs', 'goal_calories', 'goal_protein', 'goal_fat', 'goal_carbs', 
             'result', 'caption', 'created_at', 'comments', 'likes_count'
         ]
